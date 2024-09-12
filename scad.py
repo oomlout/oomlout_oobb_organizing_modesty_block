@@ -14,8 +14,8 @@ def make_scad(**kwargs):
         filter = ""
         #filter = "test"
 
-        kwargs["save_type"] = "none"
-        #kwargs["save_type"] = "all"
+        #kwargs["save_type"] = "none"
+        kwargs["save_type"] = "all"
         
         kwargs["overwrite"] = True
         
@@ -44,9 +44,11 @@ def make_scad(**kwargs):
         
         part = copy.deepcopy(part_default)
         p3 = copy.deepcopy(kwargs)
-        #p3["thickness"] = 6
+        p3["thickness"] = 15
+        p3["width"] = 5
+        p3["height"] = 1.5
         part["kwargs"] = p3
-        part["name"] = "base"
+        part["name"] = "modesty_block"
         parts.append(part)
 
         
@@ -64,6 +66,8 @@ def make_scad(**kwargs):
 def get_base(thing, **kwargs):
 
     depth = kwargs.get("thickness", 4)
+    width = kwargs.get("width", 10)
+    height = kwargs.get("height", 10)
     prepare_print = kwargs.get("prepare_print", False)
 
     pos = kwargs.get("pos", [0, 0, 0])
@@ -115,6 +119,117 @@ def get_base(thing, **kwargs):
     
 ###### utilities
 
+
+def get_modesty_block(thing, **kwargs):
+    height = kwargs.get("height", 10)
+    width = kwargs.get("width", 10)
+    depth = kwargs.get("thickness", 4)
+    prepare_print = kwargs.get("prepare_print", False)
+
+    pos = kwargs.get("pos", [0, 0, 0])
+    #pos = copy.deepcopy(pos)
+    #pos[2] += -20
+
+    #add plate
+    p3 = copy.deepcopy(kwargs)
+    p3["type"] = "p"
+    p3["shape"] = f"oobb_plate"    
+    p3["depth"] = depth
+    #p3["m"] = "#"
+    pos1 = copy.deepcopy(pos)         
+    p3["pos"] = pos1
+    oobb_base.append_full(thing,**p3)
+    #add holes
+    p3 = copy.deepcopy(kwargs)
+     #add holes
+    height_working = height
+    if height_working % 1 != 0:
+        height_working = int(height_working)
+    p3 = copy.deepcopy(kwargs)
+    p3["type"] = "p"
+    p3["shape"] = f"oobb_holes"
+    p3["both_holes"] = True  
+    p3["depth"] = depth
+    p3["height"] = height_working
+    p3["holes"] = "perimeter"
+    #p3["m"] = "#"
+    pos1 = copy.deepcopy(pos)         
+    p3["pos"] = pos1
+    oobb_base.append_full(thing,**p3)
+    p3["type"] = "p"
+    p3["shape"] = f"oobb_holes"
+    p3["both_holes"] = True  
+    p3["depth"] = depth
+    p3["holes"] = "perimeter"
+    #p3["m"] = "#"
+    pos1 = copy.deepcopy(pos)         
+    p3["pos"] = pos1
+    oobb_base.append_full(thing,**p3)
+
+    #add screws
+    p3 = copy.deepcopy(kwargs)
+    p3["type"] = "negative"
+    p3["shape"] = f"oobb_screw_countersunk"
+    p3["radius_name"] = "m3_screw_wood"
+    p3["depth"] = depth
+    p3["zz"] = "top"
+    poss = []
+    pos1 = copy.deepcopy(pos)
+    pos1[2] += depth
+    for i in range(width-1):
+        pos11 = copy.deepcopy(pos1)
+        pos11[0] += -((width-1)/2) * 15 + 15/2 + i*15
+        poss.append(pos11)
+
+    poss.append(pos11)
+    p3["pos"] = poss
+    #p3["m"] = "#"
+    oobb_base.append_full(thing,**p3)
+
+    #add captive nuts
+    p3 = copy.deepcopy(kwargs)
+    p3["type"] = "negative"
+    p3["shape"] = f"oobb_nut"
+    p3["radius_name"] = "m6"
+    poss = []
+    pos1 = copy.deepcopy(pos)
+    pos1[2] += 0
+    pos11 = copy.deepcopy(pos1)
+    pos11[0] += -((width-1)/2) * 15 + 15
+    poss.append(pos11)
+    pos12 = copy.deepcopy(pos1)
+    pos12[0] += ((width-1)/2) * 15 - 15
+    poss.append(pos12)
+
+    p3["pos"] = poss
+    rot = [0,0,360/12]
+    p3["rot"] = rot
+    p3["m"] = "#"
+    oobb_base.append_full(thing,**p3)
+
+    if prepare_print:
+        #put into a rotation object
+        components_second = copy.deepcopy(thing["components"])
+        return_value_2 = {}
+        return_value_2["type"]  = "rotation"
+        return_value_2["typetype"]  = "p"
+        pos1 = copy.deepcopy(pos)
+        pos1[0] += 50
+        return_value_2["pos"] = pos1
+        return_value_2["rot"] = [180,0,0]
+        return_value_2["objects"] = components_second
+        
+        thing["components"].append(return_value_2)
+
+    
+        #add slice # top
+        p3 = copy.deepcopy(kwargs)
+        p3["type"] = "n"
+        p3["shape"] = f"oobb_slice"
+        #p3["m"] = "#"
+        oobb_base.append_full(thing,**p3)
+    
+###### utilities
 
 
 def make_scad_generic(part):
